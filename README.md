@@ -1,83 +1,83 @@
 # Real-Time EMG Acquisition & Analysis System (v0.1.0)
 
-Questo repository contiene un sistema integrato ad alte prestazioni per l'acquisizione in tempo reale, il filtraggio digitale e l'analisi offline di segnali elettromiografici (EMG) biologici. Il software è specificamente ottimizzato per studi di fisiologia animale e protocolli di nuoto critico (**Ucrit**) su pesci.
+This repository contains an integrated high-performance system for real-time acquisition, digital filtering, and offline post-processing of biological electromyographic (EMG) signals. The software is specifically optimized for animal physiology studies and critical swimming speed (**Ucrit**) fish protocols.
 
-Sviluppato per **Fondazione COISPA ETS**.
-
----
-
-## 🚀 Architettura del Sistema
-
-Il sistema adotta un'architettura ibrida per garantire massima reattività dell'interfaccia utente ed efficienza di campionamento dell'hardware:
-* **Frontend (R Shiny)**: Interfaccia utente interattiva basata su `bslib` (in modalità scura per laboratori a bassa luminosità), che gestisce la visualizzazione dei grafici multi-canale sincronizzati, l'elaborazione dei filtri digitali e l'esportazione dei metadati.
-* **Backend (Python)**: Un demone di acquisizione in background (`daq_emg_stream.py`) che interagisce a basso livello con la scheda **National Instruments NI USB-6009** sfruttando l'API ufficiale NI-DAQmx per garantire lo streaming continuo senza colli di bottiglia o blocchi di memoria.
+Developed for **Fondazione COISPA ETS**.
 
 ---
 
-## ✨ Caratteristiche Principali
+## 🚀 System Architecture
 
-* **Monitoraggio Multicanale in Tempo Reale**: Visualizzazione simultanea e allineata verticalmente di fino a 8 canali analogici (da `ai0` a `ai7`) tramite grafici interattivi `plotly`.
-* **Disegno Ottimizzato**: Algoritmo integrato di downsampling (decimazione) dinamica per consentire la visualizzazione fluida di ampie finestre temporali (es. 60 secondi) senza rallentamenti, limitando i punti tracciati a schermo.
-* **Elaborazione Digitale del Segnale (DSP)**:
-  * **Rimozoine Offset (High-Pass 5 Hz)**: Rimuove l'offset elettrico DC e gli artefatti da movimento. Include il pre-padding dei dati per eliminare i transitori transitori di attivazione a $t=0$.
-  * **Filtro Notch (50 Hz)**: Elimina selettivamente le interferenze elettriche di rete.
-  * **Passa-Basso (Low-Pass 450 Hz)**: Riduce il rumore bianco elettronico ad alta frequenza.
-  * **Condizionamento**: Supporto per segnale rettificato (onda intera) e calcolo dell'inviluppo dinamico tramite **RMS mobile** (finestra regolabile).
-* **Compensazione dell'Offset DC**: Pulsante "Azzera da segnale live" per sottrarre dinamicamente l'offset residuo a pesce fermo.
-* **Salvataggio Antiperdita e Sequenziale**:
-  * Scrittura indipendente e atomica dei dati per evitare lock di scrittura.
-  * Generazione normalizzata del nome del file a partire dai metadati Ucrit (Specie, ID, Taglia, Step).
-  * Controllo dei duplicati: se il file esiste già su disco, viene accodato automaticamente un suffisso numerico progressivo (`_01`, `_02`, ecc.).
-* **Bilinguismo Nativo**: Traduzione istantanea (Italiano/Inglese) dell'intera interfaccia senza ricaricare i pannelli e senza perdita di stato dei grafici attivi.
-* **Analisi Offline Integrata**: Caricamento di registrazioni storiche in formato `.csv` o `.rds` con calcolo delle metriche chiave (Media, RMS, Picco, iEMG) sulla finestra temporale selezionata.
+The system uses a hybrid architecture to ensure maximum GUI responsiveness and hardware sampling efficiency:
+* **Frontend (R Shiny)**: An interactive user interface based on `bslib` (styled in dark mode for low-light laboratory environments) that handles synchronized multi-channel plot visualization, digital filter processing, and metadata configuration.
+* **Backend (Python)**: A background acquisition daemon (`daq_emg_stream.py`) that communicates at a low level with the **National Instruments NI USB-6009** DAQ card using the official NI-DAQmx API, ensuring continuous data streaming without memory leaks or UI freezes.
 
 ---
 
-## 🛠️ Requisiti di Sistema e Installazione
+## ✨ Key Features
 
-### 1. Driver Hardware
-Per interfacciarsi con la scheda di acquisizione NI USB-6009, è necessario installare i driver ufficiali di National Instruments:
-* Scaricare e installare [NI-DAQmx](https://www.ni.com/it-it/support/downloads/drivers/download.ni-daqmx.html).
+* **Real-Time Multi-Channel Monitoring**: Simultaneous, vertically aligned plotting of up to 8 analog channels (from `ai0` to `ai7`) using interactive `plotly` charts.
+* **Optimized Rendering**: Dynamic downsampling (decimation) algorithm to display large time windows (e.g., 60 seconds) smoothly by limiting the number of plotted data points.
+* **Digital Signal Processing (DSP)**:
+  * **Offset Removal (High-Pass 5 Hz)**: Filters out electrical DC baseline shifts and motion artifacts. Uses signal pre-padding to eliminate filter startup transients at $t=0$.
+  * **Notch Filter (50 Hz)**: Selectively removes electrical AC grid interference (hum from nearby power outlets, lights, etc.).
+  * **Low-Pass Filter (450 Hz)**: Attenuates high-frequency electronic noise that carries no useful physiological data.
+  * **Signal Conditioning**: Supports raw, rectified (full-wave), and envelope signals via a customizable **moving RMS** window.
+* **DC Offset Calibration**: A "Zero from live signal" button subtracts residual baseline voltage at rest on a per-channel basis.
+* **Conflict-Free & Lossless Saving**:
+  * Atomic and isolated data writing prevents file lock errors.
+  * Automated and normalized file naming combining Ucrit metadata (Species, ID, Size, Date, and Speed Step).
+  * Auto-increment index: if the file already exists on disk, a numerical suffix is dynamically appended (e.g., `_01`, `_02`, etc.) to prevent accidental overwrites.
+* **Native Bilingualism**: Instantaneous translation (Italian/English) of the entire interface without resetting tab states or losing active chart data.
+* **Offline Analysis Tab**: Load previous recordings in `.csv` or `.rds` formats to inspect specific slices, with automated metrics calculation (Mean, RMS, Peak, and iEMG) over the selected window.
 
-### 2. Ambiente Python
-Il demone di streaming richiede Python 3 (configurato nel PATH di sistema di Windows) e le seguenti librerie:
+---
+
+## 🛠️ System Requirements & Installation
+
+### 1. Hardware Driver
+To interface with the NI USB-6009 card, you must install the official National Instruments drivers:
+* Download and install [NI-DAQmx](https://www.ni.com/en/support/downloads/drivers/download.ni-daqmx.html).
+
+### 2. Python Environment
+The background streaming daemon requires Python 3 (added to the system PATH) and the following libraries:
 ```bash
 pip install nidaqmx numpy
 ```
 
-### 3. Ambiente R / RStudio
-L'interfaccia utente richiede R (consigliata versione $\ge$ 4.0) e i pacchetti elencati di seguito. Per installarli, eseguire in RStudio:
+### 3. R / RStudio Environment
+The graphical interface requires R (version $\ge$ 4.0 recommended) and the packages listed below. To install them, run the following in RStudio:
 ```R
 install.packages(c("shiny", "bslib", "plotly", "tidyverse"))
 ```
 
 ---
 
-## 🏃 Come Avviare l'Applicazione
+## 🏃 How to Run the Application
 
-1. Collegare la scheda NI USB-6009 al computer tramite porta USB (assicurarsi che venga rilevata dal sistema come `Dev1` tramite l'utility NI MAX).
-2. Aprire RStudio.
-3. Impostare la directory di lavoro sulla cartella contenente l'applicazione:
+1. Connect the NI USB-6009 DAQ card to your computer via USB (verify it is recognized by the system as `Dev1` using the NI MAX utility).
+2. Open RStudio.
+3. Set your working directory to the folder containing the application:
    ```R
-   setwd("percorso/della/cartella/EMG")
+   setwd("path/to/EMG/folder")
    ```
-4. Eseguire l'applicazione Shiny:
+4. Run the Shiny app:
    ```R
    shiny::runApp()
    ```
 
 ---
 
-## 📝 Struttura del File di Registrazione
+## 📝 Recording File Structure
 
-I file generati al termine della registrazione (salvati sia in formato `.csv` che in formato compresso binario `.rds` ad alta velocità) presentano la seguente struttura tabellare:
-* `time_s`: Tempo relativo all'avvio della registrazione (in secondi, partendo da `0.0`).
-* `clock_time`: Ora civile precisa in formato `HH:MM:SS.FFF` ricavata dal server di clock di sistema.
-* Colonne Canali (es. `ai0`, `ai1`): Valori di tensione acquisiti (espressi in Volt), già compensati dall'offset impostato in calibrazione.
+Files saved at the end of a recording (both in `.csv` and high-speed binary `.rds` formats) contain the following columns:
+* `time_s`: Relative elapsed time from the start of the recording (in seconds, starting at `0.0`).
+* `clock_time`: Precise wall-clock time in `HH:MM:SS.FFF` format derived from the system clock.
+* Active Channels (e.g., `ai0`, `ai1`): Calibrated voltage values (expressed in Volts), adjusted by the offset determined during calibration.
 
 ---
 
-## 👥 Crediti e Contatti
+## 👥 Credits and Contact
 
-* **Autore Scientifico**: Walter Zupa ([zupa@fondazionecoispa.org](mailto:zupa@fondazionecoispa.org))
-* **Sviluppo & Affiliazione**: [Fondazione COISPA ETS](https://www.coispa.it)
+* **Scientific Author**: Walter Zupa ([zupa@fondazionecoispa.org](mailto:zupa@fondazionecoispa.org))
+* **Development & Affiliation**: [Fondazione COISPA ETS](https://www.coispa.it)
